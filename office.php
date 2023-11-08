@@ -30,7 +30,7 @@
     $result = mysqli_query($conn, $query);
 
     //Fetch the data
-    $office = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    $offices = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
     //Free Result
     mysqli_free_result($result);
