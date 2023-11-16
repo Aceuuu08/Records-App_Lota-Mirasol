@@ -22,15 +22,47 @@
 <?php
     require('config/config.php');
     require('config/db.php');
+    // get value sent over search form  
+    $search = $_GET['search'];
 
-    //CREATE query
-    $query = 'SELECT transaction.datelog, transaction.documentcode, transaction.address, office.name as office_name CONCAT(employee.lastname. ",", employee.firstname) as employee_fullname  FROM recordapp_db.employee recordapp_db.office recordapp_db.transaction  WHERE transaction.employee_id=employee.id and transaction.office_id = office.id, office WHERE employee.office_id = office = id' ;
+    // Define total number of result you want per page
+    $results_per_page = 5;
 
-    //GET RESULT
+    // find the total number of resolt/rows stored in the database
+    $query  = "SELECT * FROM transaction";
     $result = mysqli_query($conn, $query);
+    $number_of_result = mysqli_num_rows($result);
+    
+    //Determine the total number of page available
+    $number_of_page = ceil($number_of_result / $results_per_page);
+
+    // determine which page number visitor is currently on
+    if(!isset($_GET['page'])){
+        $page = 1;
+    } else {
+        $page = $_GET['page'];
+     }
+
+    // Determine the sql LIMIT starting number for the result on the display page
+    $page_first_result = ($page-1) * $results_per_page;
+
+   
+    //CREATE query
+    if (strlen($search) > 0) {
+        $query = 'SELECT transaction.datelog, transaction.documentcode, transaction.action, office.name as office_name, CONCAT(employee.lastname, ",", employee.firstname) as employee_fullname FROM employee, office, transaction 
+        WHERE transaction.employee_id=employee.id and transaction.office_id = office.id and transaction.documentcode=' .$search . ' ORDER BY transaction.documentcode, transaction.datelog LIMIT '. $page_first_result . ','. $results_per_page;
+    
+    } else {
+        $query = 'SELECT transaction.datelog, transaction.documentcode, transaction.action, office.name as office_name, CONCAT(employee.lastname, ",", employee.firstname) as employee_fullname FROM employee, office, transaction 
+        WHERE transaction.employee_id=employee.id and transaction.office_id = office.id  ORDER BY transaction.documentcode, transaction.datelog LIMIT '. $page_first_result . ','. $results_per_page;
+    
+    }
+   
+    //GET RESULT
+    $result = mysqli_query($conn, $query);  
 
     //Fetch the data
-    $transaction = mysqli_fetch_all($result, MYSQLI_ASSOC);
+     $transactions = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
     //Free Result
     mysqli_free_result($result);
@@ -56,8 +88,20 @@
                     <div class="row">
                     <div class="col-md-12">
                             <div class="card strpied-tabled-with-hover">
+                            <br/>
+                            <div class="col-md-12">
+                                    <form action="/transaction.php" method="GET">
+                                        <input type="text" name="search" /> 
+                                        <input type="submit" value="Search" class="btn btn-info btn-fill" />
+                                    </form>
+                                    </a>
+                                    <div class="col-md-12">
+                                    <a href="/transaction-add.php">
+                                        <button type="submit" class="btn btn-info btn-fill pull-right">Add New Transaction</button>
+                                    </a>
+                                </div>
                                 <div class="card-header ">
-                                    <h4 class="card-title">Transaction</h4>
+                                    <h4 class="card-title">Transactions</h4>
                                     <p class="card-category">Here is a subtitle for this table</p>
                                 </div>
                                 <div class="card-body table-full-width table-responsive">
@@ -67,7 +111,7 @@
                                             <th>Document Code</th>
                                             <th>Action</th>
                                             <th>Office</th>
-                                            <th>employee</th>
+                                            <th>Employee</th>
                                             <th>Remarks</th>
                                         </thead>
                                         <tbody>
@@ -75,11 +119,10 @@
                                             <tr>
                                                 <td><?php echo $transaction['datelog']; ?></td>
                                                 <td><?php echo $transaction['documentcode']; ?></td>
-                                                <td><?php echo $transaction['acdtion']; ?></td>
+                                                <td><?php echo $transaction['action']; ?></td>
                                                 <td><?php echo $transaction['office_name']; ?></td>
                                                 <td><?php echo $transaction['employee_fullname']; ?></td>
                                                 <td><?php echo $transaction['remarks']; ?></td>
-                                                
                                             </tr>
                                             <?php endforeach?>
                                           
@@ -89,8 +132,12 @@
                             </div>
                         </div>
                     </div>
+                    <?php
+                        for($page=1; $page <= $number_of_page; $page++){
+                            echo '<a href = "transaction.php?page='. $page .'">' . $page . '</a>';
+                        }
+                    ?>
                 </div>
-
             </div>
 
 
@@ -131,6 +178,7 @@
             </footer>
         </div>
     </div>
+   
 </body>
 <!--   Core JS Files   -->
 <script src="assets/js/core/jquery.3.2.1.min.js" type="text/javascript"></script>

@@ -22,15 +22,35 @@
 <?php
     require('config/config.php');
     require('config/db.php');
+    // Define total number of result you want per page
+    $results_per_page = 5;
+
+    // find the total number of resolt/rows stored in the database
+    $query  = "SELECT * FROM employee";
+    $result = mysqli_query($conn, $query);
+    $number_of_result = mysqli_num_rows($result);
+    
+    //Determine the total number of page available
+    $number_of_page = ceil($number_of_result / $results_per_page);
+
+    // determine which page number visitor is currently on
+    if(!isset($_GET['page'])){
+        $page = 1;
+    } else {
+        $page = $_GET['page'];
+     }
+
+    // Determine the sql LIMIT starting number for the result on the display page
+    $page_first_result = ($page-1) * $results_per_page;
 
     //CREATE query
-    $query = 'SELECT employee.lastname, employee.firstname, employee.address, office.name as office_name FROM employee, office WHERE employee, office WHERE employee.office_id = office = id';
+    $query = 'SELECT employee.id, employee.lastname, employee.firstname, employee.address, office.name as office_name FROM employee, office WHERE employee.office_id = office.id ORDER BY employee.lastname LIMIT '. $page_first_result . ','. $results_per_page;
 
     //GET RESULT
-    $result = mysqli_query($conn, $query);
+    $result = mysqli_query($conn, $query);  
 
     //Fetch the data
-    $office = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    $employees = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
     //Free Result
     mysqli_free_result($result);
@@ -56,6 +76,12 @@
                     <div class="row">
                     <div class="col-md-12">
                             <div class="card strpied-tabled-with-hover">
+                            <br/>
+                                <div class="col-md-12">
+                                    <a href="/employee-add.php">
+                                        <button type="submit" class="btn btn-info btn-fill pull-right">Add New Employee</button>
+                                    </a>
+                                </div>
                                 <div class="card-header ">
                                     <h4 class="card-title">Employees</h4>
                                     <p class="card-category">Here is a subtitle for this table</p>
@@ -63,19 +89,30 @@
                                 <div class="card-body table-full-width table-responsive">
                                     <table class="table table-hover table-striped">
                                         <thead>
-                                            <th>Last Name</th>
-                                            <th>First Name</th>
+                                            <th>Last name</th>
+                                            <th>First name</th>
                                             <th>Address</th>
                                             <th>Office</th>
+                                            <th>Action</th>
+                                 
                                         </thead>
                                         <tbody>
-                                            <?php foreach($offices as $office) : ?>
+                                            <?php foreach($employees as $employee) : ?>
                                             <tr>
-                                                <td><?php echo $office['lastname']; ?></td>
-                                                <td><?php echo $office['firstname']; ?></td>
-                                                <td><?php echo $office['address']; ?></td>
-                                                <td><?php echo $office['office_name']; ?></td>
-                                                
+                                                <td><?php echo $employee['lastname']; ?></td>
+                                                <td><?php echo $employee['firstname']; ?></td>
+                                                <td><?php echo $employee['address']; ?></td>
+                                                <td><?php echo $employee['office_name']; ?></td>
+                                                <td>
+                                                    <a href ="/employee-edit.php?id=<?php echo $employee['id']; ?>">
+                                                        <button type="submit" class="btn btn-warning btn-fill pull-right">Edit</button>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                <a href="/employee-delete.php?id=<?php echo $employee['id']; ?>">
+                                                <button type="submit" class="btn btn-danger btn-fill pull-right">Delete</button>
+                                                </a>
+                                                </td>
                                             </tr>
                                             <?php endforeach?>
                                           
@@ -85,11 +122,13 @@
                             </div>
                         </div>
                     </div>
+                    <?php
+                        for($page=1; $page <= $number_of_page; $page++){
+                            echo '<a href = "employee.php?page='. $page .'">' . $page . '</a>';
+                        }
+                    ?>
                 </div>
-
             </div>
-
-
             <footer class="footer">
                 <div class="container-fluid">
                     <nav>
@@ -127,6 +166,7 @@
             </footer>
         </div>
     </div>
+   
 </body>
 <!--   Core JS Files   -->
 <script src="assets/js/core/jquery.3.2.1.min.js" type="text/javascript"></script>
